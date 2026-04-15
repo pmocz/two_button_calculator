@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Two-Button Calculator · EML Sheffer Operator</title>
+<title>Two-Button Calculator</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -445,6 +445,7 @@ class C {
   sub(o) { return new C(this.re - o.re, this.im - o.im); }
   cExp() {
     const r = Math.exp(this.re);
+    if (this.im === 0) return new C(r, 0);  // avoids Infinity*sin(0)=NaN
     return new C(r * Math.cos(this.im), r * Math.sin(this.im));
   }
   cLog() {
