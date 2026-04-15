@@ -60,11 +60,18 @@ header h1 span { color: var(--gold); }
   font-size: 0.9rem;
   color: var(--red);
 }
-.paper-link {
+.header-links {
   margin-left: auto;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+.paper-link {
   font-size: 0.8rem;
   color: var(--text2);
+  text-decoration: none;
 }
+.paper-link:hover { color: var(--text); text-decoration: underline; }
 
 /* ── MAIN LAYOUT ─────────────────────────────────── */
 .main-grid {
@@ -72,7 +79,7 @@ header h1 span { color: var(--gold); }
   grid-template-columns: 300px 1fr;
   gap: 0;
   height: calc(100vh - 56px - 280px);
-  min-height: 380px;
+  min-height: 600px;
 }
 
 /* ── LEFT PANEL ──────────────────────────────────── */
@@ -364,7 +371,10 @@ header h1 span { color: var(--gold); }
 <header>
   <h1>Two-<span>Button</span> Calculator</h1>
   <div class="formula-badge">eml(x, y) = exp(x) − ln(y)</div>
-  <span class="paper-link">arXiv:2603.21852 · Odrzywołek (2026)</span>
+  <div class="header-links">
+    <a class="paper-link" href="https://github.com/pmocz/two_button_calculator" target="_blank" rel="noopener">GitHub</a>
+    <a class="paper-link" href="https://arxiv.org/abs/2603.21852" target="_blank" rel="noopener">arXiv:2603.21852 · Odrzywołek (2026)</a>
+  </div>
 </header>
 
 <div class="main-grid">
