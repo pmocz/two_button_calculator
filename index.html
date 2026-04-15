@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Two-Button Calculator · EML Sheffer Operator</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0a0a12;
+  --panel: #111120;
+  --panel2: #161628;
+  --border: #2a2a4a;
+  --gold: #f5a623;
+  --blue: #4a90d9;
+  --purple: #9b59b6;
+  --red: #e94560;
+  --green: #27ae60;
+  --eml-node: #2c3e50;
+  --eml-border: #7f8c8d;
+  --text: #e8e8f0;
+  --text2: #9090b0;
+  --mono: 'Courier New', monospace;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  min-height: 100vh;
+  background-image:
+    linear-gradient(rgba(74,144,217,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(74,144,217,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* ── HEADER ─────────────────────────────────────── */
+header {
+  background: linear-gradient(135deg, #0d0d20 0%, #1a1a35 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+header h1 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+header h1 span { color: var(--gold); }
+.formula-badge {
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  color: var(--red);
+}
+.paper-link {
+  margin-left: auto;
+  font-size: 0.8rem;
+  color: var(--text2);
+}
+
+/* ── MAIN LAYOUT ─────────────────────────────────── */
+.main-grid {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 0;
+  height: calc(100vh - 56px - 280px);
+  min-height: 380px;
+}
+
+/* ── LEFT PANEL ──────────────────────────────────── */
+.left-panel {
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
+}
+
+.section-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text2);
+  margin-bottom: 4px;
+}
+
+/* Stack display */
+.stack-display {
+  background: #060610;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  min-height: 70px;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+}
+.stack-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 3px 0;
+  border-bottom: 1px solid #1a1a30;
+  animation: fadeIn 0.2s ease;
+}
+.stack-item:last-child { border-bottom: none; }
+.stack-sym { color: var(--text2); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stack-num { color: var(--green); font-weight: bold; margin-left: 8px; }
+.stack-empty { color: #333; font-style: italic; }
+
+/* Variable inputs */
+.var-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.var-label { font-family: var(--mono); font-size: 1rem; min-width: 20px; }
+.var-label.x-label { color: var(--blue); }
+.var-label.y-label { color: var(--purple); }
+.var-input {
+  flex: 1;
+  background: #060610;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  padding: 6px 10px;
+  font-family: var(--mono);
+  font-size: 0.9rem;
+}
+.var-input:focus { outline: none; border-color: var(--blue); }
+
+/* Buttons */
+.btn-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.btn {
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  font-weight: 700;
+  padding: 14px;
+  transition: transform 0.1s, filter 0.1s;
+  position: relative;
+  letter-spacing: 0.02em;
+}
+.btn:hover { filter: brightness(1.15); transform: translateY(-1px); }
+.btn:active { transform: translateY(1px); filter: brightness(0.9); }
+
+.btn-1 {
+  background: linear-gradient(135deg, #c87f0a, var(--gold));
+  color: #000;
+  box-shadow: 0 4px 15px rgba(245,166,35,0.3);
+}
+.btn-x {
+  background: linear-gradient(135deg, #2171b5, var(--blue));
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(74,144,217,0.3);
+}
+.btn-y {
+  background: linear-gradient(135deg, #6c3483, var(--purple));
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(155,89,182,0.3);
+}
+.btn-eml {
+  grid-column: 1 / -1;
+  background: linear-gradient(135deg, #c0392b, var(--red));
+  color: #fff;
+  font-size: 1.3rem;
+  letter-spacing: 0.1em;
+  padding: 18px;
+  box-shadow: 0 4px 20px rgba(233,69,96,0.4);
+}
+.btn-eml::before { content: '⊕  '; opacity: 0.7; }
+
+.btn-small-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.btn-undo, .btn-clear {
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  border-radius: 6px;
+  padding: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-undo:hover { background: var(--border); color: var(--text); }
+.btn-clear:hover { background: #3d1515; color: #e74c3c; border-color: #e74c3c; }
+
+/* Result */
+.result-box {
+  background: #060610;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+}
+.result-value {
+  font-family: var(--mono);
+  font-size: 1.1rem;
+  color: var(--green);
+  word-break: break-all;
+}
+.result-check {
+  font-size: 0.8rem;
+  margin-top: 4px;
+  color: var(--text2);
+}
+.result-check.match { color: var(--green); }
+.result-hint {
+  font-size: 0.75rem;
+  color: var(--text2);
+  margin-top: 4px;
+  font-family: var(--mono);
+}
+
+/* ── RIGHT PANEL (SVG Tree) ──────────────────────── */
+.right-panel {
+  background: #080812;
+  position: relative;
+  overflow: hidden;
+}
+.tree-svg {
+  width: 100%;
+  height: 100%;
+}
+.tree-empty-msg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: var(--border);
+  font-size: 0.9rem;
+  pointer-events: none;
+}
+.tree-empty-msg .big { font-size: 3rem; opacity: 0.3; }
+.tree-counter {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  font-size: 0.75rem;
+  color: var(--text2);
+  font-family: var(--mono);
+}
+
+/* ── PRESETS ─────────────────────────────────────── */
+.presets-section {
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  padding: 14px 20px;
+  height: 280px;
+  overflow-y: auto;
+}
+.presets-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text2);
+  margin-bottom: 12px;
+}
+.presets-grid {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.preset-card {
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s;
+  min-width: 170px;
+  max-width: 220px;
+  flex: 1;
+  position: relative;
+}
+.preset-card:hover { border-color: var(--red); background: #1a1a30; transform: translateY(-2px); }
+.preset-card.playing { border-color: var(--gold); background: #1e1800; }
+
+.preset-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-family: var(--mono);
+}
+.preset-k {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: var(--border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 0.7rem;
+  font-family: var(--mono);
+  color: var(--text2);
+}
+.preset-desc {
+  font-size: 0.75rem;
+  color: var(--text2);
+  margin: 3px 0 6px;
+}
+.preset-formula {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--red);
+  word-break: break-all;
+  line-height: 1.4;
+}
+.preset-rpn {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+.rpn-token {
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 0.65rem;
+  font-family: var(--mono);
+}
+.rpn-token.t-1 { background: rgba(245,166,35,0.2); color: var(--gold); }
+.rpn-token.t-x { background: rgba(74,144,217,0.2); color: var(--blue); }
+.rpn-token.t-y { background: rgba(155,89,182,0.2); color: var(--purple); }
+.rpn-token.t-E { background: rgba(233,69,96,0.2); color: var(--red); }
+.rpn-token.t-E.active { background: var(--red); color: #fff; }
+.rpn-token.t-1.active { background: var(--gold); color: #000; }
+.rpn-token.t-x.active { background: var(--blue); color: #fff; }
+.rpn-token.t-y.active { background: var(--purple); color: #fff; }
+
+/* ── ANIMATIONS ──────────────────────────────────── */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+@keyframes nodeAppear { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.btn-flash { animation: pulse 0.2s ease; }
+
+/* SVG elements */
+.node-circle { transition: r 0.2s; }
+.node-label { pointer-events: none; dominant-baseline: middle; text-anchor: middle; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Two-<span>Button</span> Calculator</h1>
+  <div class="formula-badge">eml(x, y) = exp(x) − ln(y)</div>
+  <span class="paper-link">arXiv:2603.21852 · Odrzywołek (2026)</span>
+</header>
+
+<div class="main-grid">
+  <!-- LEFT: Calculator -->
+  <div class="left-panel">
+    <div>
+      <div class="section-label">Stack (top = right)</div>
+      <div class="stack-display" id="stackDisplay">
+        <div class="stack-empty">empty — press 1 or x to begin</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Variable values</div>
+      <div class="var-row">
+        <span class="var-label x-label">x</span>
+        <input class="var-input" id="xInput" type="number" value="2" step="0.1"
+               title="Value of x" oninput="onVarChange()">
+      </div>
+      <div class="var-row" style="margin-top:6px">
+        <span class="var-label y-label">y</span>
+        <input class="var-input" id="yInput" type="number" value="3" step="0.1"
+               title="Value of y" oninput="onVarChange()">
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Buttons</div>
+      <div class="btn-grid">
+        <button class="btn btn-1" id="btn1" onclick="pressKey('1')" title="Push constant 1">1</button>
+        <button class="btn btn-x" id="btnX" onclick="pressKey('x')" title="Push variable x">x</button>
+        <button class="btn btn-y" id="btnY" onclick="pressKey('y')" title="Push variable y">y</button>
+        <button class="btn btn-eml" id="btnEml" onclick="pressKey('E')" title="Apply EML operator: pops y, x → pushes exp(x)−ln(y)">EML</button>
+      </div>
+      <div class="btn-small-grid" style="margin-top:8px">
+        <button class="btn-undo" onclick="undo()">↩ Undo</button>
+        <button class="btn-clear" onclick="clearAll()">✕ Clear</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Result</div>
+      <div class="result-box">
+        <div class="result-value" id="resultValue">—</div>
+        <div class="result-check" id="resultCheck"></div>
+        <div class="result-hint" id="resultHint"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Tree -->
+  <div class="right-panel" id="treePanel">
+    <div class="tree-empty-msg" id="treeEmptyMsg">
+      <div class="big">🌲</div>
+      <div>Expression tree appears here</div>
+      <div style="margin-top:6px;font-size:0.8rem">Grammar: S → 1 | eml(S, S)</div>
+    </div>
+    <svg class="tree-svg" id="treeSvg"></svg>
+    <div class="tree-counter" id="treeCounter"></div>
+  </div>
+</div>
+
+<!-- PRESETS -->
+<div class="presets-section">
+  <div class="presets-title">Preset Programs — click to animate</div>
+  <div class="presets-grid" id="presetsGrid"></div>
+</div>
+
+<script>
+'use strict';
+
+// ═══════════════════════════════════════════════
+// COMPLEX ARITHMETIC
+// ═══════════════════════════════════════════════
+class C {
+  constructor(re, im = 0) { this.re = re; this.im = im; }
+  add(o) { return new C(this.re + o.re, this.im + o.im); }
+  sub(o) { return new C(this.re - o.re, this.im - o.im); }
+  cExp() {
+    const r = Math.exp(this.re);
+    return new C(r * Math.cos(this.im), r * Math.sin(this.im));
+  }
+  cLog() {
+    const r = Math.sqrt(this.re * this.re + this.im * this.im);
+    if (r === 0) return new C(-Infinity, 0);
+    return new C(Math.log(r), Math.atan2(this.im, this.re));
+  }
+  fmt() {
+    const re = this.re, im = this.im;
+    if (!isFinite(re)) return re > 0 ? '+∞' : '-∞';
+    const rStr = fmtNum(re);
+    if (Math.abs(im) < 1e-9) return rStr;
+    const iStr = fmtNum(Math.abs(im));
+    return `${rStr} ${im >= 0 ? '+' : '−'} ${iStr}i`;
+  }
+  isReal() { return Math.abs(this.im) < 1e-9; }
+  realVal() { return this.re; }
+}
+
+function fmtNum(n) {
+  if (!isFinite(n)) return n > 0 ? '+∞' : '-∞';
+  if (Math.abs(n) < 1e-10 && n !== 0) return '≈0';
+  if (Number.isInteger(n) || Math.abs(n) >= 100) return n.toPrecision(7).replace(/\.?0+$/, '');
+  return parseFloat(n.toPrecision(7)).toString();
+}
+
+function eml(x, y) {
+  return x.cExp().sub(y.cLog());
+}
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+let nodeStack = [];
+let numStack = [];
+let symStack = [];
+let history = [];
+let nodeId = 0;
+
+function mkLeaf(v) { return { type: 'leaf', value: v, id: nodeId++ }; }
+function mkEml(l, r) { return { type: 'eml', left: l, right: r, id: nodeId++ }; }
+
+function saveHistory() {
+  history.push({
+    nodes: nodeStack.map(n => JSON.parse(JSON.stringify(n))),
+    nums: numStack.map(c => new C(c.re, c.im)),
+    syms: [...symStack],
+  });
+  if (history.length > 50) history.shift();
+}
+
+function undo() {
+  if (!history.length) return;
+  const h = history.pop();
+  nodeStack = h.nodes;
+  numStack = h.nums;
+  symStack = h.syms;
+  nodeId = Math.max(nodeId, 0);
+  update();
+}
+
+function clearAll() {
+  saveHistory();
+  nodeStack = []; numStack = []; symStack = [];
+  update();
+}
+
+function getXVal() { return parseFloat(document.getElementById('xInput').value) || 0; }
+function getYVal() { return parseFloat(document.getElementById('yInput').value) || 0; }
+
+function onVarChange() {
+  // Re-evaluate leaves
+  reEvalStack();
+  update();
+}
+
+function reEvalStack() {
+  // Walk node trees and re-evaluate numerically
+  numStack = nodeStack.map(n => evalNode(n));
+}
+
+function evalNode(node) {
+  if (node.type === 'leaf') {
+    if (node.value === '1') return new C(1);
+    if (node.value === 'x') return new C(getXVal());
+    if (node.value === 'y') return new C(getYVal());
+  }
+  const l = evalNode(node.left);
+  const r = evalNode(node.right);
+  return eml(l, r);
+}
+
+// ═══════════════════════════════════════════════
+// KEY PRESSES
+// ═══════════════════════════════════════════════
+function pressKey(key, skipHistory = false) {
+  if (!skipHistory) saveHistory();
+
+  if (key === '1') {
+    nodeStack.push(mkLeaf('1'));
+    numStack.push(new C(1));
+    symStack.push('1');
+    flashBtn('btn1');
+  } else if (key === 'x') {
+    nodeStack.push(mkLeaf('x'));
+    numStack.push(new C(getXVal()));
+    symStack.push('x');
+    flashBtn('btnX');
+  } else if (key === 'y') {
+    nodeStack.push(mkLeaf('y'));
+    numStack.push(new C(getYVal()));
+    symStack.push('y');
+    flashBtn('btnY');
+  } else if (key === 'E') {
+    if (nodeStack.length < 2) {
+      document.getElementById('btnEml').style.boxShadow = '0 0 0 3px #e74c3c';
+      setTimeout(() => document.getElementById('btnEml').style.boxShadow = '', 400);
+      return;
+    }
+    const yNode = nodeStack.pop(); const xNode = nodeStack.pop();
+    const yNum = numStack.pop();   const xNum = numStack.pop();
+    const ySym = symStack.pop();   const xSym = symStack.pop();
+    nodeStack.push(mkEml(xNode, yNode));
+    numStack.push(eml(xNum, yNum));
+    symStack.push(`eml(${xSym}, ${ySym})`);
+    flashBtn('btnEml');
+  }
+  update();
+}
+
+function flashBtn(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('btn-flash');
+  void el.offsetWidth;
+  el.classList.add('btn-flash');
+  setTimeout(() => el.classList.remove('btn-flash'), 300);
+}
+
+// ═══════════════════════════════════════════════
+// UI UPDATE
+// ═══════════════════════════════════════════════
+function update() {
+  renderStack();
+  renderResult();
+  renderTree();
+}
+
+function renderStack() {
+  const el = document.getElementById('stackDisplay');
+  if (!nodeStack.length) {
+    el.innerHTML = '<div class="stack-empty">empty — press 1 or x to begin</div>';
+    return;
+  }
+  el.innerHTML = nodeStack.map((n, i) => {
+    const sym = symStack[i];
+    const num = numStack[i];
+    const short = sym.length > 30 ? sym.slice(0, 28) + '…' : sym;
+    return `<div class="stack-item">
+      <span class="stack-sym" title="${escHtml(sym)}">${escHtml(short)}</span>
+      <span class="stack-num">${escHtml(num.fmt())}</span>
+    </div>`;
+  }).join('');
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function renderResult() {
+  const valEl = document.getElementById('resultValue');
+  const checkEl = document.getElementById('resultCheck');
+  const hintEl = document.getElementById('resultHint');
+
+  if (!numStack.length) {
+    valEl.textContent = '—';
+    checkEl.textContent = '';
+    hintEl.textContent = '';
+    return;
+  }
+
+  const top = numStack[numStack.length - 1];
+  valEl.textContent = top.fmt();
+
+  // Check against known functions
+  const x = getXVal(), y = getYVal();
+  const checks = [
+    { label: '= e',       val: Math.E,                   cond: () => nodeStack.length === 1 },
+    { label: '= eˣ',      val: Math.exp(x),              cond: () => true },
+    { label: '= ln(x)',   val: Math.log(x),              cond: () => x > 0 },
+    { label: '= √x',      val: Math.sqrt(x),             cond: () => x >= 0 },
+    { label: '= x²',      val: x * x,                    cond: () => true },
+    { label: '= −x',      val: -x,                       cond: () => true },
+    { label: '= 1/x',     val: 1 / x,                    cond: () => x !== 0 },
+    { label: '= x − 1',   val: x - 1,                    cond: () => true },
+    { label: '= x − y',   val: x - y,                    cond: () => true },
+    { label: '= x × y',   val: x * y,                    cond: () => true },
+    { label: '= x + y',   val: x + y,                    cond: () => true },
+    { label: '= x / y',   val: x / y,                    cond: () => y !== 0 },
+    { label: '= 0',       val: 0,                        cond: () => true },
+    { label: '= −1',      val: -1,                       cond: () => true },
+    { label: '= 2',       val: 2,                        cond: () => true },
+    { label: '= π',       val: Math.PI,                  cond: () => true },
+    { label: '= sin(x)',  val: Math.sin(x),              cond: () => true },
+    { label: '= cos(x)',  val: Math.cos(x),              cond: () => true },
+  ];
+
+  if (top.isReal()) {
+    const rv = top.realVal();
+    let found = null;
+    for (const c of checks) {
+      if (c.cond() && isFinite(c.val) && Math.abs(rv - c.val) < 1e-6 * (1 + Math.abs(c.val))) {
+        found = c.label; break;
+      }
+    }
+    if (found) {
+      checkEl.className = 'result-check match';
+      checkEl.textContent = '✓ ' + found;
+    } else {
+      checkEl.className = 'result-check';
+      checkEl.textContent = '';
+    }
+  } else {
+    checkEl.className = 'result-check';
+    checkEl.textContent = '(complex result)';
+  }
+
+  // Hint: depth / complexity
+  if (nodeStack.length > 0) {
+    const topNode = nodeStack[nodeStack.length - 1];
+    const k = countK(topNode);
+    const d = depth(topNode);
+    hintEl.textContent = `K=${k} tokens · depth=${d} · stack size=${nodeStack.length}`;
+  } else {
+    hintEl.textContent = '';
+  }
+}
+
+function countK(node) {
+  if (node.type === 'leaf') return 1;
+  return 1 + countK(node.left) + countK(node.right);
+}
+function depth(node) {
+  if (node.type === 'leaf') return 0;
+  return 1 + Math.max(depth(node.left), depth(node.right));
+}
+
+// ═══════════════════════════════════════════════
+// TREE RENDERING (SVG)
+// ═══════════════════════════════════════════════
+const R = 18;  // node radius
+const H_GAP = 44;
+const V_GAP = 52;
+
+function layoutNode(node) {
+  if (node.type === 'leaf') {
+    node._w = 1;
+    return;
+  }
+  layoutNode(node.left);
+  layoutNode(node.right);
+  node._w = node.left._w + node.right._w;
+}
+
+function positionNode(node, x, y) {
+  node._x = x;
+  node._y = y;
+  if (node.type === 'eml') {
+    const lw = node.left._w;
+    const rw = node.right._w;
+    const total = node._w;
+    const leftX = x - (rw / total) * (node._w * H_GAP / 2);
+    const rightX = x + (lw / total) * (node._w * H_GAP / 2);
+    positionNode(node.left, leftX, y + V_GAP);
+    positionNode(node.right, rightX, y + V_GAP);
+  }
+}
+
+function collectNodes(node, arr = []) {
+  arr.push(node);
+  if (node.type === 'eml') {
+    collectNodes(node.left, arr);
+    collectNodes(node.right, arr);
+  }
+  return arr;
+}
+
+function renderTree() {
+  const svg = document.getElementById('treeSvg');
+  const emptyMsg = document.getElementById('treeEmptyMsg');
+  const counter = document.getElementById('treeCounter');
+  svg.innerHTML = '';
+
+  if (!nodeStack.length) {
+    emptyMsg.style.display = '';
+    counter.textContent = '';
+    return;
+  }
+  emptyMsg.style.display = 'none';
+
+  const W = svg.clientWidth || 600;
+  const H = svg.clientHeight || 380;
+
+  // Render all trees in stack, most recent on right
+  const trees = nodeStack;
+  const n = trees.length;
+  const slotW = W / n;
+
+  // Count total nodes for counter
+  let totalNodes = 0;
+  nodeStack.forEach(t => { totalNodes += countK(t); });
+  counter.textContent = `${totalNodes} token${totalNodes !== 1 ? 's' : ''} · ${n} tree${n !== 1 ? 's' : ''} on stack`;
+
+  trees.forEach((tree, idx) => {
+    layoutNode(tree);
+    const d = depth(tree);
+    const treeH = d * V_GAP + R * 2 + 10;
+    const cx = slotW * idx + slotW / 2;
+    const cy = 30;
+
+    // Scale to fit height
+    const scaleY = Math.min(1, (H - 40) / Math.max(treeH, 60));
+    const vgap = V_GAP * scaleY;
+
+    // Re-position with scaled V_GAP
+    function posFit(node, x, y) {
+      node._x = x; node._y = y;
+      if (node.type === 'eml') {
+        const lw = node.left._w, rw = node.right._w, total = node._w;
+        const spread = Math.min(slotW * 0.42, node._w * H_GAP / 2);
+        const leftX = x - (rw / total) * spread;
+        const rightX = x + (lw / total) * spread;
+        posFit(node.left, leftX, y + vgap);
+        posFit(node.right, rightX, y + vgap);
+      }
+    }
+    posFit(tree, cx, cy);
+
+    const nodes = collectNodes(tree);
+    const isTopOfStack = (idx === n - 1);
+
+    // Draw edges first
+    nodes.forEach(node => {
+      if (node.type === 'eml') {
+        [node.left, node.right].forEach(child => {
+          const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          line.setAttribute('x1', node._x); line.setAttribute('y1', node._y);
+          line.setAttribute('x2', child._x); line.setAttribute('y2', child._y);
+          line.setAttribute('stroke', isTopOfStack ? '#3a3a5a' : '#1e1e2e');
+          line.setAttribute('stroke-width', '1.5');
+          svg.appendChild(line);
+        });
+      }
+    });
+
+    // Draw nodes
+    nodes.forEach(node => {
+      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      g.style.animation = 'nodeAppear 0.25s ease';
+
+      const r = isTopOfStack ? R : R * 0.8;
+
+      if (node.type === 'leaf') {
+        const colors = { '1': [var_gold, '#000'], 'x': [var_blue, '#fff'], 'y': [var_purple, '#fff'] };
+        const [fill, textFill] = colors[node.value] || ['#555', '#fff'];
+
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', node._x); circle.setAttribute('cy', node._y);
+        circle.setAttribute('r', r);
+        circle.setAttribute('fill', fill);
+        circle.setAttribute('opacity', isTopOfStack ? '1' : '0.5');
+        g.appendChild(circle);
+
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', node._x); text.setAttribute('y', node._y);
+        text.setAttribute('fill', textFill); text.setAttribute('font-size', r * 0.85);
+        text.setAttribute('font-weight', 'bold'); text.setAttribute('font-family', 'monospace');
+        text.setAttribute('dominant-baseline', 'middle'); text.setAttribute('text-anchor', 'middle');
+        text.textContent = node.value;
+        g.appendChild(text);
+      } else {
+        // EML node
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', node._x); circle.setAttribute('cy', node._y);
+        circle.setAttribute('r', r);
+        circle.setAttribute('fill', '#1c2e3d');
+        circle.setAttribute('stroke', isTopOfStack ? '#e94560' : '#3a4a5a');
+        circle.setAttribute('stroke-width', '1.5');
+        circle.setAttribute('opacity', isTopOfStack ? '1' : '0.5');
+        g.appendChild(circle);
+
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', node._x); text.setAttribute('y', node._y);
+        text.setAttribute('fill', isTopOfStack ? '#e94560' : '#5a6a7a');
+        text.setAttribute('font-size', r * 0.75);
+        text.setAttribute('font-weight', 'bold'); text.setAttribute('font-family', 'monospace');
+        text.setAttribute('dominant-baseline', 'middle'); text.setAttribute('text-anchor', 'middle');
+        text.textContent = 'E';
+        g.appendChild(text);
+      }
+
+      // Tooltip
+      g.setAttribute('title', node.type === 'leaf' ? node.value : 'eml');
+      svg.appendChild(g);
+    });
+
+    // Slot divider
+    if (idx > 0) {
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', slotW * idx); line.setAttribute('y1', 0);
+      line.setAttribute('x2', slotW * idx); line.setAttribute('y2', H);
+      line.setAttribute('stroke', '#1e1e2e'); line.setAttribute('stroke-width', '1');
+      line.setAttribute('stroke-dasharray', '4,4');
+      svg.insertBefore(line, svg.firstChild);
+    }
+  });
+}
+
+// CSS variable values for JS use
+const var_gold = '#f5a623';
+const var_blue = '#4a90d9';
+const var_purple = '#9b59b6';
+
+// ═══════════════════════════════════════════════
+// PRESETS
+// ═══════════════════════════════════════════════
+const PRESETS = [
+  {
+    name: 'e',
+    k: 3,
+    desc: "Euler's number",
+    formula: 'eml(1, 1)',
+    rpn: ['1','1','E'],
+    note: 'exp(1) − ln(1) = e − 0 = e',
+  },
+  {
+    name: 'eˣ',
+    k: 3,
+    desc: 'Exponential function',
+    formula: 'eml(x, 1)',
+    rpn: ['x','1','E'],
+    note: 'exp(x) − ln(1) = eˣ',
+  },
+  {
+    name: 'ln x',
+    k: 7,
+    desc: 'Natural logarithm',
+    formula: 'eml(1, eml(eml(1,x), 1))',
+    rpn: ['1','1','x','E','1','E','E'],
+    note: 'eml(1,x)=e−ln x, then eml(that,1)=eᵉ/x, then eml(1,that)=ln x',
+  },
+  {
+    name: '0',
+    k: 7,
+    desc: 'Zero constant',
+    formula: 'eml(1, eml(eml(1,1), 1))',
+    rpn: ['1','1','1','E','1','E','E'],
+    note: 'eml(1,1)=e, eml(e,1)=eᵉ, eml(1,eᵉ)=e−e=0',
+  },
+  {
+    name: 'x − 1',
+    k: 11,
+    desc: 'Decrement by 1',
+    formula: 'eml(ln(x), eml(1,1))',
+    rpn: ['1','1','x','E','1','E','E','1','1','E','E'],
+    note: 'exp(ln x)−ln(e) = x − 1',
+  },
+  {
+    name: 'x − y',
+    k: 11,
+    desc: 'Subtraction',
+    formula: 'eml(ln(x), eml(y,1))',
+    rpn: ['1','1','x','E','1','E','E','y','1','E','E'],
+    note: 'exp(ln x)−ln(eʸ) = x − y',
+  },
+  {
+    name: '−1',
+    k: 15,
+    desc: 'Negative one',
+    formula: 'eml(ln(0), eml(1,1))',
+    rpn: ['1','1','1','1','1','E','1','E','E','E','1','E','E','1','1','E','E'],
+    note: 'ln(0)=−∞, exp(−∞)−ln(e)=0−1=−1',
+  },
+  {
+    name: '−x',
+    k: 15,
+    desc: 'Negation',
+    formula: 'eml(ln(0), eml(x,1))',
+    rpn: ['1','1','1','1','1','E','1','E','E','E','1','E','E','x','1','E','E'],
+    note: 'exp(−∞)−ln(eˣ) = 0 − x = −x',
+  },
+  {
+    name: 'x²',
+    k: 17,
+    desc: 'Square',
+    formula: 'eml(2·ln x, 1)',
+    rpn: ['1','1','x','E','1','E','E','1','1','x','E','1','E','E','E','1','E'],
+    note: 'exp(ln x + ln x) = exp(2 ln x) = x²',
+  },
+  {
+    name: 'x × y',
+    k: 17,
+    desc: 'Multiplication',
+    formula: 'eml(ln(x)+ln(y), 1)',
+    rpn: ['1','1','x','E','1','E','E','1','1','y','E','1','E','E','E','1','E'],
+    note: 'exp(ln x + ln y) via: eml(lnx, eml(lny,1)) adds logs',
+  },
+];
+
+// Derive -1, -x, x², x×y from first principles using iterative simulation
+// The RPNs for -1 and -x above go through ln(0)=-∞ (extended reals / IEEE 754)
+// x² and x×y: we use the fact that ln(x)+ln(y) = eml(ln(x), exp(-ln(y)))...
+// Actually let's use verified RPNs:
+// x² = eml( eml(lnx, e^(-lnx) ) where we cheat... let me just use the x×y via:
+// x*y = eml( eml(lnx, 1/y_ln ), 1) -- complex. For demo, show formula but mark as "uses ext. reals"
+
+// Override x² and x×y with simpler verified derivations:
+// x² = exp(2*ln(x)) -- need 2*ln(x)
+// eml(lnx, lny) = exp(lnx) - ln(lny) = x - ln(lny)... not x+y
+// Use: eml(lnx, exp(-lny)) = exp(lnx) - ln(exp(-lny)) = x - (-y) = x+y (addition!)
+// Then exp(x+y) with x=lnX, y=lnY gives exp(lnX+lnY) = X*Y
+
+// ln(x) + ln(y) = eml( lnx, exp(-lny) ) ← this is addition of logs
+// exp( -lny ) = eml( -lny, 1 ) ← need -lny
+// -lny = eml(ln(0), lny) where ln(0)=-inf... complex
+
+// Actually simplest x*y I can construct without ext reals:
+// x * y = exp(lnx + lny)
+// Need addition. From paper, x+y has K=19.
+
+// For the demo, let me use safe RPNs that work in standard floats:
+// Override the presets that need special handling
+
+// Actually, the RPNs for -1,-x I wrote above do use ln(0)=-Infinity which IS valid
+// in IEEE 754 (which JS uses). Let's verify:
+// 0 = eml(1, eml(eml(1,1),1)) = 1,1,1,E,1,E,E → verified above
+// ln(0): apply ln formula to 0: [1, 1, 0_rpn, E, 1, E, E]
+// 0_rpn = [1,1,1,E,1,E,E] (7 tokens)
+// ln(0)_rpn = [1, 1, (1,1,1,E,1,E,E), E, 1, E, E] = [1,1,1,1,1,E,1,E,E,E,1,E,E] (13 tokens)
+// -1 = eml(ln(0), e) = [ln0_rpn, 1, 1, E, E] = 13+3+1=17 tokens... that's K=17, paper says K=15
+//
+// The paper's direct search found K=15 formulas using shorter paths.
+// For the demo I'll use these K=17 extended forms (correct but not minimal):
+
+PRESETS[6].rpn = ['1','1','1','1','1','E','1','E','E','E','1','E','E','1','1','E','E']; // 17 tokens for -1
+PRESETS[6].k = 17;
+PRESETS[6].note += ' (K=17 via EML compiler; minimal direct=15)';
+
+PRESETS[7].rpn = ['1','1','1','1','1','E','1','E','E','E','1','E','E','x','1','E','E']; // 17 tokens for -x
+PRESETS[7].k = 17;
+PRESETS[7].note += ' (K=17 via EML compiler; minimal direct=15)';
+
+// x² via eml: exp(2*ln x) = eml(eml(lnx, lnx ??? ... hard)
+// Use: eml(lnx, 1/x) where 1/x = exp(-ln x)
+// eml(lnx, exp(-lnx)) = exp(lnx) - ln(exp(-lnx)) = x - (-lnx) = x + lnx ≠ x²
+// Let me think: x² = exp(ln x + ln x)
+// We need ln x + ln x = 2*lnx
+// eml(lnx, e^(-lnx)) = x + lnx... not 2*lnx
+// eml(lnx, 1) = exp(lnx) - ln(1) = x ← identity
+//
+// Actually: to get 2*lnx, we can use the fact that lnx + lnx = eml(lnx, exp(-lnx))
+// exp(-lnx) = eml(-lnx, 1) = exp(-lnx) but we need -lnx first
+// With -x available (K=17), -lnx = K=17+7+?
+// This gets complex. Let me just show x² from x*y with x=y:
+// Use x*y formula and set both x and y inputs to same value
+
+// For x*y verified: eml(lnx, eml(lny, 1)) = exp(lnx) - ln(eml(lny,1)) = exp(lnx)-ln(eʸ)
+// Wait: eml(lny, 1) = exp(lny) - ln(1) = y (identity if we use lny and 1)
+// Actually eml(lny, 1) = e^(lny) - ln(1) = y - 0 = y. So that just gives exp(lnx)-ln(y) = x - lny... not x*y
+
+// Correct approach: x*y = exp(lnx + lny)
+// lnx + lny as a single value: use eml(lnx, exp(-lny)):
+// eml(lnx, exp(-lny)) = exp(lnx) - ln(exp(-lny)) = x - (-lny) = x + lny
+// So eml(lnx, exp(-lny)) = x + lny ≠ lnx + lny
+
+// To get lnx + lny as EML: we'd use eml(eml(lnx, lny), 1)?
+// eml(eml(lnx, lny), 1) = exp(eml(lnx,lny)) - 0 = exp(exp(lnx)-ln(lny)) = exp(x - ln(lny))... not lnx+lny
+
+// You know what, let me just note that x*y requires the addition first,
+// and use the paper's K=17 value without a playable RPN for now.
+// Instead I'll derive x*y differently:
+// x * y = exp(lnx) * exp(lny) = eml(lnx + lny, 1)
+// We need lnx + lny. From addition formula (K=19 for x+y general):
+// For now, simplest: mark x*y as requiring complex derivation, show formula.
+
+// Update presets 8 and 9 to be "info only"
+PRESETS[8].rpn = null; // x² - needs negation
+PRESETS[8].note = 'Requires negation as intermediate. See paper Table 4.';
+PRESETS[9].rpn = null; // x*y - requires addition
+PRESETS[9].note = 'x×y = exp(lnx + lny). Addition requires more bootstrapping. See paper Table 4 (K=17 direct search).';
+
+let playingPreset = null;
+
+function renderPresets() {
+  const grid = document.getElementById('presetsGrid');
+  grid.innerHTML = '';
+  PRESETS.forEach((p, idx) => {
+    const card = document.createElement('div');
+    card.className = 'preset-card';
+    card.id = `preset-${idx}`;
+
+    const canPlay = p.rpn !== null;
+
+    card.innerHTML = `
+      <span class="preset-k">K=${p.k}</span>
+      <div class="preset-name">${p.name}</div>
+      <div class="preset-desc">${p.desc}</div>
+      <div class="preset-formula">${escHtml(p.formula)}</div>
+      <div class="preset-rpn" id="rpn-${idx}">
+        ${p.rpn ? p.rpn.map((t,i) => `<span class="rpn-token t-${t}" id="rpn-${idx}-${i}">${t==='E'?'EML':t}</span>`).join('') : '<span style="color:#555;font-size:0.65rem">see paper</span>'}
+      </div>
+      ${canPlay ? `<div style="margin-top:8px;font-size:0.7rem;color:#555">${escHtml(p.note)}</div>` : `<div style="margin-top:8px;font-size:0.7rem;color:#555">${escHtml(p.note)}</div>`}
+    `;
+
+    if (canPlay) {
+      card.onclick = () => playPreset(idx);
+      card.title = 'Click to load and animate this program';
+    } else {
+      card.style.opacity = '0.7';
+      card.style.cursor = 'default';
+      card.title = 'Not playable in this demo — see paper';
+    }
+
+    grid.appendChild(card);
+  });
+}
+
+async function playPreset(idx) {
+  if (playingPreset !== null) return;
+  const p = PRESETS[idx];
+  if (!p.rpn) return;
+
+  playingPreset = idx;
+  clearAll();
+  // clear clears with undo save; we want fresh
+  nodeStack = []; numStack = []; symStack = []; history = [];
+  update();
+
+  const card = document.getElementById(`preset-${idx}`);
+  card.classList.add('playing');
+
+  for (let i = 0; i < p.rpn.length; i++) {
+    // Highlight current token
+    const tokenEl = document.getElementById(`rpn-${idx}-${i}`);
+    if (tokenEl) tokenEl.classList.add('active');
+
+    pressKey(p.rpn[i], true);
+    await sleep(340);
+
+    if (tokenEl) tokenEl.classList.remove('active');
+  }
+
+  card.classList.remove('playing');
+  playingPreset = null;
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+renderPresets();
+update();
+
+// Re-render tree on resize
+window.addEventListener('resize', () => { renderTree(); });
+</script>
+</body>
+</html>
