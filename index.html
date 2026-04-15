@@ -83,7 +83,7 @@ header h1 span { color: var(--gold); }
   display: flex;
   flex-direction: column;
   gap: 14px;
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 .section-label {
@@ -100,10 +100,14 @@ header h1 span { color: var(--gold); }
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 10px;
-  min-height: 70px;
+  height: 110px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   font-family: var(--mono);
   font-size: 0.78rem;
 }
+.stack-display::-webkit-scrollbar { display: none; }
 .stack-item {
   display: flex;
   justify-content: space-between;
@@ -158,11 +162,6 @@ header h1 span { color: var(--gold); }
 .btn:hover { filter: brightness(1.15); transform: translateY(-1px); }
 .btn:active { transform: translateY(1px); filter: brightness(0.9); }
 
-.btn-1 {
-  background: linear-gradient(135deg, #c87f0a, var(--gold));
-  color: #000;
-  box-shadow: 0 4px 15px rgba(245,166,35,0.3);
-}
 .btn-x {
   background: linear-gradient(135deg, #2171b5, var(--blue));
   color: #fff;
@@ -172,6 +171,12 @@ header h1 span { color: var(--gold); }
   background: linear-gradient(135deg, #6c3483, var(--purple));
   color: #fff;
   box-shadow: 0 4px 15px rgba(155,89,182,0.3);
+}
+.btn-1 {
+  grid-column: 1 / -1;
+  background: linear-gradient(135deg, #c87f0a, var(--gold));
+  color: #000;
+  box-shadow: 0 4px 15px rgba(245,166,35,0.3);
 }
 .btn-eml {
   grid-column: 1 / -1;
@@ -389,9 +394,9 @@ header h1 span { color: var(--gold); }
     <div>
       <div class="section-label">Buttons</div>
       <div class="btn-grid">
-        <button class="btn btn-1" id="btn1" onclick="pressKey('1')" title="Push constant 1">1</button>
         <button class="btn btn-x" id="btnX" onclick="pressKey('x')" title="Push variable x">x</button>
         <button class="btn btn-y" id="btnY" onclick="pressKey('y')" title="Push variable y">y</button>
+        <button class="btn btn-1" id="btn1" onclick="pressKey('1')" title="Push constant 1">1</button>
         <button class="btn btn-eml" id="btnEml" onclick="pressKey('E')" title="Apply EML operator: pops y, x → pushes exp(x)−ln(y)">EML</button>
       </div>
       <div class="btn-small-grid" style="margin-top:8px">
@@ -603,6 +608,7 @@ function renderStack() {
       <span class="stack-num">${escHtml(num.fmt())}</span>
     </div>`;
   }).join('');
+  el.scrollTop = el.scrollHeight;
 }
 
 function escHtml(s) {
